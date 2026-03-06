@@ -12,7 +12,11 @@ import Observation
 final class WaterTrackerViewModel {
     var currentIntake: DailyIntake
     var entries: [DrinkEntry] = []
-    var history: [DailyIntake] = []
+    var history: [DailyIntake] = [] {
+        didSet {
+            saveHistory()
+        }
+    }
     
     var goal: Double {
         didSet {
@@ -33,6 +37,10 @@ final class WaterTrackerViewModel {
         let initialGoal = Self.loadGoal()
         goal = initialGoal
         
+        if let loadedHistory = Self.loadHistory() {
+            history = loadedHistory
+        }
+        
         let today = Calendar.current.startOfDay(for: Date())
         currentIntake = DailyIntake(date: today, amount: 0, goal: initialGoal)
     }
@@ -51,6 +59,26 @@ final class WaterTrackerViewModel {
         // Сделать функцию, которая считает цель по параметрам
         //FIXME: calculation goal
         return 2200
+    }
+    
+    private static func loadHistory() -> [DailyIntake]? {
+        let defaults = UserDefaults.standard
+        if let savedData = defaults.data(forKey: "history") {
+            let decoder = JSONDecoder()
+            if let loadedData = try? decoder.decode([DailyIntake].self, from: savedData) {
+                return loadedData
+            }
+        }
+        return nil
+    }
+    
+    
+    func saveHistory() {
+        let encoder = JSONEncoder()
+        if let data = try? encoder.encode(history) {
+            let defaults = UserDefaults.standard
+            defaults.set(data, forKey: "history")
+        }
     }
     
     func addDrink(option: VolumeOption, amount: Double) {
@@ -74,18 +102,20 @@ final class WaterTrackerViewModel {
     }
     
     func intake(for date: Date) -> DailyIntake? {
-        history.first {
-            Calendar.current.isDate($0.date, inSameDayAs: date)
+        let calendar = Calendar.current
+        
+        if calendar.isDate(Date(), inSameDayAs: date) {
+            return currentIntake
+        } else {
+            return history.first {
+                calendar.isDate($0.date, inSameDayAs: date)
+            }
         }
     }
     
     func didReachGoal(on date: Date) -> Bool {
         guard let intake = intake(for: date) else { return false }
-        return intake.goal >= intake.goal
-    }
-    
-    func saveHistory() {
-        
+        return intake.amount >= intake.goal
     }
     
     // In quick access
