@@ -8,108 +8,82 @@
 import SwiftUI
 import Observation
 
+// Мне не нравится что теперь todayIntake нужно unwrapp'ать каждый раз
+// Исправить ошибки в других файлах, так как залупа полная
+
 @Observable
 final class WaterTrackerViewModel {
-    var currentIntake: DailyIntake
-    var entries: [DrinkEntry] = []
+    private let key = "hydration_history"
+    
     var history: [DailyIntake] = [] {
         didSet {
-            saveHistory()
+            save()
         }
     }
     
-    var goal: Double {
-        didSet {
-            UserDefaults.standard.set(goal, forKey: "dailyGoal")
-            currentIntake.goal = goal
-        }
+    private var todayIndex: Int {
+        history.firstIndex {
+            Calendar.current.isDateInToday($0.date)
+        }!
+    }
+
+    var todayIntake: DailyIntake {
+        history[todayIndex]
     }
     
-    var currentAmount: Double {
-        entries.reduce(0.0) { $0 + $1.totalAmount }
-    }
-    
-    var visualTotal: Double {
-        max(currentAmount, goal)
+    var visualTotal: Int {
+        return max(todayIntake.amount, todayIntake.goal)
     }
     
     init() {
-        let initialGoal = Self.loadGoal()
-        goal = initialGoal
-        
-        if let loadedHistory = Self.loadHistory() {
-            history = loadedHistory
-        }
-        
-        let today = Calendar.current.startOfDay(for: Date())
-        currentIntake = DailyIntake(date: today, amount: 0, goal: initialGoal)
-    }
-    
-    private static func loadGoal() -> Double {
-        let savedGoal = UserDefaults.standard.double(forKey: "dailyGoal")
-        
-        if savedGoal > 0 {
-            return savedGoal
-        }
-        
-        return calculateGoal()
-    }
-    
-    private static func calculateGoal() -> Double {
-        // Сделать функцию, которая считает цель по параметрам
-        //FIXME: calculation goal
-        return 2200
-    }
-    
-    private static func loadHistory() -> [DailyIntake]? {
-        let defaults = UserDefaults.standard
-        if let savedData = defaults.data(forKey: "history") {
-            let decoder = JSONDecoder()
-            if let loadedData = try? decoder.decode([DailyIntake].self, from: savedData) {
-                return loadedData
-            }
-        }
-        return nil
-    }
-    
-    
-    func saveHistory() {
-        let encoder = JSONEncoder()
-        if let data = try? encoder.encode(history) {
-            let defaults = UserDefaults.standard
-            defaults.set(data, forKey: "history")
-        }
-    }
-    
-    func addDrink(option: VolumeOption, amount: Double) {
+        load()
         startNewDayIfNeeded()
-        if let index = entries.firstIndex(where: { $0.option.id == option.id }) {
-            entries[index].totalAmount += amount
-        } else {
-            entries.append(DrinkEntry(option: option, totalAmount: amount))
-        }
+    }
+    
+    private func load() {
+        let defaults = UserDefaults.standard
+        
+        guard
+            let data = defaults.data(forKey: key),
+            let decodedData = try? JSONDecoder().decode([DailyIntake].self, from: data)
+        else { return }
+        
+        history = decodedData
+    }
+    
+    
+    private func save() {
+        guard let data = try? JSONEncoder().encode(history) else { return }
+        UserDefaults.standard.set(data, forKey: key)
+    }
+    
+    func addDrink(_ entry: DrinkEntry) {
+        startNewDayIfNeeded()
+        
+        guard let index = history.firstIndex(where: {
+            Calendar.current.isDateInToday($0.date)
+        }) else { return }
+        
+        history[index].drinks.append(entry)
     }
     
     func startNewDayIfNeeded() {
-        let todayStart = Calendar.current.startOfDay(for: Date())
-        
-        if currentIntake.date != todayStart {
-            currentIntake.amount = currentAmount
-            history.append(currentIntake)
-            currentIntake = DailyIntake(date: todayStart, amount: 0, goal: currentIntake.goal)
-            entries.removeAll()
+
+        if !history.contains(where: {
+            Calendar.current.isDateInToday($0.date)
+        }) {
+            let newDay = DailyIntake(
+                date: Date(),
+                goal: 2000
+            )
+
+            history.insert(newDay, at: 0)
         }
     }
     
     func intake(for date: Date) -> DailyIntake? {
-        let calendar = Calendar.current
-        
-        if calendar.isDate(Date(), inSameDayAs: date) {
-            return currentIntake
-        } else {
-            return history.first {
-                calendar.isDate($0.date, inSameDayAs: date)
-            }
+        history.first {
+            Calendar.current.isDate($0.date, inSameDayAs: date)
         }
     }
     

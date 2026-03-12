@@ -7,8 +7,10 @@
 
 import SwiftUI
 
+//FIXME: broken progress 
+
 struct ProgressRingView: View {
-    let visualTotal: Double
+    let visualTotal: Int
     var entries: [DrinkEntry]
     
     let lineWidth: Double = 40
@@ -24,9 +26,9 @@ struct ProgressRingView: View {
         var current: Double = 0
         
         for entry in entries {
-            let fragment = entry.totalAmount / visualTotal
+            let fragment = Double(entry.totalAmount) / Double(visualTotal)
             let start = current
-            let end = min(current + fragment, 1)
+            let end = min(current + fragment, 1.0)
             
             result.append((entry, start, end))
             current = end

@@ -18,13 +18,13 @@ struct MainView: View {
                 let size = min(geo.size.width, geo.size.height)
                 VStack {
                     ZStack {
-                        ProgressRingView(visualTotal: viewModel.visualTotal, entries: viewModel.entries)
+                        ProgressRingView(visualTotal: viewModel.visualTotal, entries: viewModel.todayIntake.drinks)
                         
                         VStack {
-                            Text("\(viewModel.currentAmount/viewModel.goal * 100, specifier: "%.0f")%")
+                            Text("\(viewModel.todayIntake.amount/viewModel.todayIntake.goal * 100, specifier: "%.0f")%")
                                 .font(.largeTitle)
                             
-                            Text("\(Int(viewModel.currentAmount)) / \(Int(viewModel.goal)) ml")
+                            Text("\(Int(viewModel.todayIntake.amount)) / \(Int(viewModel.todayIntake.goal)) ml")
                                 .font(.title)
                         }
                     }
@@ -40,7 +40,9 @@ struct MainView: View {
             HStack {
                 ForEach(viewModel.availableOptions) { option in
                     Button {
-                        viewModel.addDrink(option: option, amount: 300) //FIXME: amount
+                        viewModel.addDrink(
+                            DrinkEntry(option: option, totalAmount: 300)//FIXME: amount
+                        )
                     } label: {
                         Label(option.name, systemImage: option.iconName)
                             .font(.callout)

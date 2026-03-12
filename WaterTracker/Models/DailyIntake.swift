@@ -10,11 +10,15 @@ import Foundation
 struct DailyIntake: Codable, Identifiable {
     let id = UUID()
     let date: Date
-    var amount: Double
-    var goal: Double
+    var goal: Int
+    var drinks: [DrinkEntry] = []
+    
+    var amount: Int {
+        drinks.reduce(0) { $0 + $1.totalAmount }
+    }
     
     var progress: Double {
-        goal > 0 ? amount / goal : 0
+        goal > 0 ? Double(amount) / Double(goal) : 0
     }
     
     var percentage: Int {
@@ -23,6 +27,6 @@ struct DailyIntake: Codable, Identifiable {
     
     // for remove the warning about UUID
     private enum CodingKeys: CodingKey {
-        case date, amount, goal
+        case date, goal, drinks
     }
 }
