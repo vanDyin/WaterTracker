@@ -16,9 +16,10 @@ struct MainView: View {
         VStack {
             GeometryReader { geo in
                 let size = min(geo.size.width, geo.size.height)
+                
                 VStack {
                     ZStack {
-                        ProgressRingView(visualTotal: viewModel.visualTotal, entries: viewModel.todayIntake.drinks)
+                        ChartsProgressView(/*visualTotal: viewModel.visualTotal, */entries: viewModel.todayIntake.aggregatedEntries)
                         
                         VStack {
                             Text("\(viewModel.todayIntake.amount/viewModel.todayIntake.goal * 100, specifier: "%.0f")%")
@@ -41,7 +42,7 @@ struct MainView: View {
                 ForEach(viewModel.availableOptions) { option in
                     Button {
                         viewModel.addDrink(
-                            DrinkEntry(option: option, totalAmount: 300)//FIXME: amount
+                            DrinkEntry(option: option, amount: 200)//FIXME: amount
                         )
                     } label: {
                         Label(option.name, systemImage: option.iconName)

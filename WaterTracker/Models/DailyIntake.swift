@@ -14,7 +14,7 @@ struct DailyIntake: Codable, Identifiable {
     var drinks: [DrinkEntry] = []
     
     var amount: Int {
-        drinks.reduce(0) { $0 + $1.totalAmount }
+        drinks.reduce(0) { $0 + $1.amount }
     }
     
     var progress: Double {
@@ -23,6 +23,39 @@ struct DailyIntake: Codable, Identifiable {
     
     var percentage: Int {
         Int(progress * 100)
+    }
+    
+    var chronologicalEntries: [DrinkEntry] {
+        guard !drinks.isEmpty else { return [] }
+        
+        var entries: [DrinkEntry] = []
+        var currentDrink = drinks.first!
+        
+        for nextDrink in drinks.dropFirst() {
+            
+            if nextDrink.option == currentDrink.option {
+                currentDrink.amount += nextDrink.amount
+            } else {
+                entries.append(currentDrink)
+                currentDrink = nextDrink
+            }
+        }
+        entries.append(currentDrink)
+        return entries
+    }
+    
+    var aggregatedEntries: [DrinkEntry] {
+        var dict: [VolumeOption : Int] = [:]
+        var order: [VolumeOption] = []
+        
+        for drink in drinks {
+            if dict[drink.option] == nil {
+                order.append(drink.option)
+            }
+            dict[drink.option, default: 0] += drink.amount
+        }
+        
+        return order.map { DrinkEntry(option: $0, amount: dict[$0]!) }
     }
     
     // for remove the warning about UUID

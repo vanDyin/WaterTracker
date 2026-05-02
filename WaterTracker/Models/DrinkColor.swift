@@ -11,6 +11,7 @@ enum DrinkColor: Codable {
     case lightBlue
     case coffee
     case peach
+    case gray
 }
 
 extension DrinkColor {
@@ -22,6 +23,8 @@ extension DrinkColor {
             return Color(red: 212/255, green: 163/255, blue: 115/255)
         case .peach:
             return Color(red: 250/255, green: 229/255, blue: 136/255)
+        case .gray:
+            return Color(red: 128/255, green: 128/255, blue: 128/255)
         }
     }
 }

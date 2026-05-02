@@ -10,10 +10,10 @@ import Foundation
 struct DrinkEntry: Identifiable, Codable, Equatable, Hashable {
     let id = UUID()
     var option: VolumeOption
-    var totalAmount: Int
+    var amount: Int
     
     // for remove the warning about UUID
     private enum CodingKeys: CodingKey {
-        case option, totalAmount
+        case option, amount
     }
 }

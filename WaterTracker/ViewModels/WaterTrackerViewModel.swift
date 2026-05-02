@@ -8,9 +8,6 @@
 import SwiftUI
 import Observation
 
-// Мне не нравится что теперь todayIntake нужно unwrapp'ать каждый раз
-// Исправить ошибки в других файлах, так как залупа полная
-
 @Observable
 final class WaterTrackerViewModel {
     private let key = "hydration_history"
@@ -29,10 +26,6 @@ final class WaterTrackerViewModel {
 
     var todayIntake: DailyIntake {
         history[todayIndex]
-    }
-    
-    var visualTotal: Int {
-        return max(todayIntake.amount, todayIntake.goal)
     }
     
     init() {
